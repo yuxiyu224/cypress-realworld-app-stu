@@ -1,0 +1,46 @@
+# 工作流的名称
+name: Cypress E2E Tests
+
+# 触发工作流的事件
+# 当有代码 push 到 main 分支时触发
+on:
+  push:
+    branches: [ main ]
+
+# 工作流包含的任务 (Jobs)
+jobs:
+  # 定义一个名为 'cypress-run' 的任务
+  cypress-run:
+    # 指定运行此任务的虚拟机环境，我们使用最新的 Ubuntu
+    runs-on: ubuntu-latest
+    
+    # 因为我们的项目需要特定的 Node 版本，所以在这里明确指定
+    # 这就像你在本地使用 NVM 一样！
+    strategy:
+      matrix:
+        node-version: [20.x] # 我们指定使用 Node.js v20
+
+    # 定义此任务中的具体步骤 (Steps)
+    steps:
+      # 第1步：检出（下载）你的代码到虚拟机
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 第2步：安装指定的 Node.js 环境
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      # 第3步：安装 Yarn
+      # 因为我们知道了项目必须用 Yarn，所以在CI环境里也要先安装它
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      # 第4步：安装项目依赖
+      - name: Install dependencies
+        run: yarn install
+
+      # 第5步：运行Cypress测试 (在CI环境中，我们以无头模式运行)
+      - name: Run Cypress tests
+        run: yarn cypress:run
